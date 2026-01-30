@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>הארון החכם שלי</title>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --accent: #3498db;
+            --bg: #f8f9fa;
+            --white: #ffffff;
+        }
+
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background-color: var(--bg); 
+            margin: 0; 
+            padding: 20px; 
+            color: var(--primary);
+        }
+
+        h1 { margin-bottom: 30px; }
+
+        /* אזור העלאה */
+        .upload-section {
+            background: var(--white);
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            max-width: 600px;
+            margin: 0 auto 40px auto;
+            border: 2px dashed var(--accent);
+        }
+
+        /* גריד של המשבצות */
+        .closet-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 25px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* עיצוב כרטיס בגד */
+        .card {
+            background: var(--white);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+            transition: transform 0.2s;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        .card-image {
+            width: 100%;
+            height: 250px;
+            object-fit: cover; /* גורם לתמונה למלא את המשבצת בלי להתעוות */
+            background-color: #eee;
+        }
+
+        .card-content {
+            padding: 15px;
+            text-align: right;
+            flex-grow: 1;
+        }
+
+        .card-title {
+            margin: 0 0 10px 0;
+            font-size: 1.2em;
+            color: var(--primary);
+        }
+
+        .card-info {
+            font-size: 0.9em;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .tag {
+            display: inline-block;
+            background: #e1f0fa;
+            color: var(--accent);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.8em;
+            margin-top: 5px;
+        }
+
+        /* כפתורים */
+        .btn-delete {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(255, 68, 68, 0.9);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            cursor: pointer;
+            z-index: 10;
+        }
+
+        .btn-suggest {
+            width: 100%;
+            padding: 10px;
+            background: var(--accent);
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            border-top: 1px solid #eee;
+        }
+
+        .btn-suggest:hover { background: #2980b9; }
+
+        input[type="file"] { margin: 15px 0; }
+        #status { font-weight: bold; margin-top: 10px; color: var(--accent); }
+        /* חלון ההצעה (Modal) */
+.modal {
+    display: none; 
+    position: fixed; 
+    z-index: 100; 
+    left: 0; top: 0; width: 100%; height: 100%; 
+    background-color: rgba(0,0,0,0.8);
+    justify-content: center; align-items: center;
+}
+
+.modal-content {
+    background: white; padding: 20px; border-radius: 20px;
+    max-width: 500px; width: 90%; text-align: center;
+}
+
+.suggestion-flex {
+    display: flex; justify-content: space-around; align-items: center; margin-top: 20px;
+}
+
+.suggestion-item img {
+    width: 150px; height: 150px; object-fit: cover; border-radius: 10px; border: 2px solid #eee;
+}
+
+.plus-sign { font-size: 2em; color: #3498db; }
+    </style>
+</head>
+<body>
+
+    <div style="text-align: center;">
+        <h1>👕 הארון החכם שלי</h1>
+        
+        <div class="upload-section">
+            <h3>📸 הוספת בגד חדש עם AI</h3>
+            <input type="file" id="imageInput" accept="image/*">
+            <br>
+            <button onclick="uploadImage()" id="uploadBtn" style="padding: 10px 20px; background: #27ae60; color: white; border: none; border-radius: 5px; cursor: pointer;">סרוק והוסף לארון</button>
+            <div id="status"></div>
+        </div>
+    </div>
+
+    <div id="closet" class="closet-grid">
+        </div>
+
+    <script>
+        async function loadClothes() {
+            try {
+                const res = await fetch('/api/clothes');
+                const clothes = await res.json();
+                const container = document.getElementById('closet');
+                
+                container.innerHTML = clothes.map(item => `
+                    <div class="card">
+                        <button class="btn-delete" onclick="deleteItem('${item._id}')">✕</button>
+                        <img class="card-image" src="${item.imageUrl || 'https://via.placeholder.com/250'}" alt="${item.type}">
+                        <div class="card-content">
+                            <h3 class="card-title">${item.type}</h3>
+                            <div class="card-info">צבע: <b>${item.color}</b></div>
+                            <div class="tag">${item.category}</div>
+                            <p style="font-size: 0.8em; color: #888; margin-top: 10px;">${item.description || ''}</p>
+                        </div>
+                        <button class="btn-suggest" onclick="getSuggestion('${item._id}', '${item.type}')">✨ מה מתאים לזה?</button>
+                    </div>
+                `).join('');
+            } catch (err) {
+                console.error("שגיאה בטעינה:", err);
+            }
+        }
+
+        async function uploadImage() {
+            const fileInput = document.getElementById('imageInput');
+            const status = document.getElementById('status');
+            if (fileInput.files.length === 0) return alert("בחר תמונה");
+
+            const formData = new FormData();
+            formData.append('garmentImage', fileInput.files[0]);
+            status.innerHTML = "⏳ ה-AI מנתח... מיד זה מופיע בארון";
+
+            try {
+                await fetch('/api/upload-garment', { method: 'POST', body: formData });
+                status.innerHTML = "✅ נוסף בהצלחה!";
+                loadClothes();
+            } catch (err) {
+                status.innerHTML = "❌ שגיאה בהעלאה";
+            }
+        }
+
+        async function deleteItem(id) {
+            if (confirm("למחוק?")) {
+                await fetch(`/api/clothes/${id}`, { method: 'DELETE' });
+                loadClothes();
+            }
+        }
+
+        async function getSuggestion(id, type) {
+    const res = await fetch(`/api/suggest/${id}`);
+    const match = await res.json();
+    
+    if (match.type) {
+        // מציאת התמונה של הבגד המקורי מהדף
+        const originalCard = document.querySelector(`button[onclick*="${id}"]`).closest('.card');
+        const originalImgSrc = originalCard.querySelector('img').src;
+
+        // עדכון החלון בנתונים
+        document.getElementById('selectedImg').src = originalImgSrc;
+        document.getElementById('matchedImg').src = match.imageUrl || 'https://via.placeholder.com/150';
+        document.getElementById('matchedName').innerText = match.type;
+        document.getElementById('matchText').innerText = `עם ה${type} הזה, כדאי ללבוש את ה${match.type} ה${match.color}!`;
+        
+        // הצגת החלון
+        document.getElementById('suggestionModal').style.display = 'flex';
+    } else {
+        alert(match.message);
+    }
+}
+
+function closeModal() {
+    document.getElementById('suggestionModal').style.display = 'none';
+}
+
+        loadClothes();
+    </script>
+    <div id="suggestionModal" class="modal">
+    <div class="modal-content">
+        <h2>✨ הסטייליסט מציע שילוב!</h2>
+        <div class="suggestion-flex">
+            <div class="suggestion-item">
+                <img id="selectedImg" src="" alt="בחרת">
+                <p>הפריט שלך</p>
+            </div>
+            <div class="plus-sign">+</div>
+            <div class="suggestion-item">
+                <img id="matchedImg" src="" alt="התאמה">
+                <p id="matchedName"></p>
+            </div>
+        </div>
+        <p id="matchText" style="margin-top: 20px; font-weight: bold;"></p>
+        <button onclick="closeModal()" style="padding: 10px 20px; background: #2c3e50; color: white; border: none; border-radius: 5px; cursor: pointer;">סגור</button>
+    </div>
+</div>
+</body>
+</html>
