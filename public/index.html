@@ -118,7 +118,24 @@
             font-weight: bold;
             border-top: 1px solid #eee;
         }
+        .camera-btn {
+    display: inline-block;
+    background: #3498db;
+    color: white;
+    padding: 15px 25px;
+    border-radius: 50px;
+    cursor: pointer;
+    font-weight: bold;
+    margin-bottom: 10px;
+    transition: background 0.3s;
+}
 
+.camera-btn:hover { background: #2980b9; }
+
+/* מחביא את ה-input המקורי והמכוער של הדפדפן */
+#imageInput {
+    display: none;
+}
         .btn-suggest:hover { background: #2980b9; }
 
         input[type="file"] { margin: 15px 0; }
@@ -154,13 +171,24 @@
     <div style="text-align: center;">
         <h1>👕 הארון החכם שלי</h1>
         
-        <div class="upload-section">
-            <h3>📸 הוספת בגד חדש עם AI</h3>
-            <input type="file" id="imageInput" accept="image/*">
-            <br>
-            <button onclick="uploadImage()" id="uploadBtn" style="padding: 10px 20px; background: #27ae60; color: white; border: none; border-radius: 5px; cursor: pointer;">סרוק והוסף לארון</button>
-            <div id="status"></div>
-        </div>
+       <div class="upload-section">
+    <h3>📸 צלם בגד חדש</h3>
+    
+    <label for="imageInput" class="camera-btn">
+        <span>📷 פתח מצלמה / בחר תמונה</span>
+        <input type="file" id="imageInput" accept="image/*" capture="environment" onchange="previewImage(this)">
+    </label>
+    
+    <div id="imagePreview" style="margin: 15px 0; display: none;">
+        <img id="preview" src="" style="width: 150px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.2);">
+    </div>
+
+    <button onclick="uploadImage()" id="uploadBtn" style="display: none; width: 100%; padding: 12px; background: #27ae60; color: white; border: none; border-radius: 8px; font-weight: bold;">
+        סרוק והוסף לארון ✨
+    </button>
+    
+    <div id="status"></div>
+</div>
     </div>
 
     <div id="closet" class="closet-grid">

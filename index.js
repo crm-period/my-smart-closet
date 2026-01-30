@@ -216,3 +216,18 @@ app.post('/api/upload-garment', upload.single('garmentImage'), async (req, res) 
 app.listen(3000, () => {
     console.log('🚀 השרת רץ בכתובת: http://localhost:3000');
 });
+function previewImage(input) {
+    const preview = document.getElementById('preview');
+    const previewDiv = document.getElementById('imagePreview');
+    const uploadBtn = document.getElementById('uploadBtn');
+
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            preview.src = e.target.result;
+            previewDiv.style.display = 'block';
+            uploadBtn.style.display = 'block'; // מציג את כפתור השליחה רק אחרי שיש תמונה
+        }
+        reader.readAsDataURL(input.files[0]);
+    }
+}
